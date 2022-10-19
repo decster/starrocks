@@ -161,6 +161,7 @@ add_library(Storage STATIC
     base_and_cumulative_compaction_policy.cpp
     cluster_id_mgr.cpp
     push_utils.cpp
+    row_store_encoder.cpp
     lake/async_delta_writer.cpp
     lake/compaction_policy.cpp
     lake/horizontal_compaction_task.cpp
