@@ -12,6 +12,7 @@
 namespace starrocks {
 
 class Tablet;
+class RowStore;
 
 struct PartialUpdateState {
     std::vector<uint64_t> src_rss_rowids;
@@ -29,6 +30,8 @@ public:
 
     Status apply(Tablet* tablet, Rowset* rowset, uint32_t rowset_id, EditVersion latest_applied_version,
                  const PrimaryIndex& index);
+
+    Status apply_to_rowstore(RowStore* rowstore, int64_t version);
 
     const std::vector<ColumnUniquePtr>& upserts() const { return _upserts; }
     const std::vector<ColumnUniquePtr>& deletes() const { return _deletes; }
@@ -69,6 +72,9 @@ private:
     // states for partial update
     EditVersion _read_version;
     uint32_t _next_rowset_id = 0;
+
+    // chunk for rowstore
+    vectorized::ChunkPtr _rowstore_chunk;
 
     // TODO: dump to disk if memory usage is too large
     std::vector<PartialUpdateState> _partial_update_states;

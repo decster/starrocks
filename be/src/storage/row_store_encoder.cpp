@@ -266,8 +266,8 @@ static void prepare_ops_datas_selective(const vectorized::Schema& schema, const 
     }
 }
 
-void RowStoreEncoder::encode_keys(const vectorized::Schema& schema, const vectorized::Chunk& chunk, size_t offset,
-                                  size_t len, std::vector<std::string>& keys) {
+void RowStoreEncoder::chunk_to_keys(const vectorized::Schema& schema, const vectorized::Chunk& chunk, size_t offset,
+                                    size_t len, std::vector<std::string>& keys) {
     vector<EncodeOp> ops;
     vector<const void*> datas;
     prepare_ops_datas_selective(schema, chunk, &ops, 0, schema.num_key_fields() - 1, &datas);
@@ -279,8 +279,8 @@ void RowStoreEncoder::encode_keys(const vectorized::Schema& schema, const vector
     }
 }
 
-void RowStoreEncoder::encode_values(const vectorized::Schema& schema, const vectorized::Chunk& chunk, size_t offset,
-                                    size_t len, std::vector<std::string>& values) {
+void RowStoreEncoder::chunk_to_values(const vectorized::Schema& schema, const vectorized::Chunk& chunk, size_t offset,
+                                      size_t len, std::vector<std::string>& values) {
     vector<EncodeOp> ops;
     vector<const void*> datas;
     prepare_ops_datas_selective(schema, chunk, &ops, schema.num_key_fields(), schema.num_fields() - 1, &datas);
@@ -292,8 +292,8 @@ void RowStoreEncoder::encode_values(const vectorized::Schema& schema, const vect
     }
 }
 
-Status RowStoreEncoder::decode(const std::vector<std::string>& keys, const std::vector<std::string>& values,
-                               const vectorized::Schema& schema, vectorized::Chunk* dest) {
+Status RowStoreEncoder::kvs_to_chunk(const std::vector<std::string>& keys, const std::vector<std::string>& values,
+                                     const vectorized::Schema& schema, vectorized::Chunk* dest) {
     CHECK(keys.size() == values.size()) << "key size should equal to value size";
     for (int i = 0; i < keys.size(); i++) {
         Slice s = Slice(keys[i]);

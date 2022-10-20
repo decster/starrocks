@@ -24,11 +24,19 @@ using WriteBatch = rocksdb::WriteBatch;
 
 class RowStore {
 public:
-    explicit RowStore(std::string db_path, int64_t tablet_id);
+    explicit RowStore(std::string db_path);
 
     virtual ~RowStore();
 
+    Status init();
+
+    // write key value pairs to rowstore with version
+    Status batch_put(const std::vector<std::string>& keys, const std::vector<std::string>& values, int64_t version);
+
 private:
+    std::string _db_path;
+    rocksdb::DB* _db;
+    uint32_t key_prefix_len_{10};
 };
 
 } // namespace starrocks

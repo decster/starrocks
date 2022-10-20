@@ -85,6 +85,7 @@ Status RowsetUpdateState::_do_load(Tablet* tablet, Rowset* rowset) {
     auto& itrs = res.value();
     CHECK(itrs.size() == rowset->num_segments()) << "itrs.size != num_segments";
     _upserts.resize(rowset->num_segments());
+    _rowstore_chunk = ChunkHelper::new_chunk(pkey_schema, 4096);
     // only hold pkey, so can use larger chunk size
     auto chunk_shared_ptr = ChunkHelper::new_chunk(pkey_schema, 4096);
     auto chunk = chunk_shared_ptr.get();
@@ -104,6 +105,7 @@ Status RowsetUpdateState::_do_load(Tablet* tablet, Rowset* rowset) {
                     return st;
                 } else {
                     PrimaryKeyEncoder::encode(pkey_schema, *chunk, 0, chunk->num_rows(), col.get());
+                    _rowstore_chunk.get()->append(*chunk);
                 }
             }
             itr->close();
@@ -426,6 +428,10 @@ Status RowsetUpdateState::_update_rowset_meta(Tablet* tablet, Rowset* rowset) {
 
 std::string RowsetUpdateState::to_string() const {
     return Substitute("RowsetUpdateState tablet:$0", _tablet_id);
+}
+
+Status RowsetUpdateState::apply_to_rowstore(RowStore* rowstore, int64_t version) {
+    return Status::OK();
 }
 
 } // namespace starrocks

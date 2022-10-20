@@ -33,6 +33,7 @@
 #include "runtime/exec_env.h"
 #include "service/backend_options.h"
 #include "storage/olap_define.h"
+#include "storage/row_store.h"
 #include "storage/rowset/rowset_factory.h"
 #include "storage/rowset/rowset_meta.h"
 #include "storage/rowset/rowset_meta_manager.h"
@@ -84,6 +85,7 @@ Status DataDir::init(bool read_only) {
     RETURN_IF_ERROR_WITH_WARN(_init_data_dir(), "_init_data_dir failed");
     RETURN_IF_ERROR_WITH_WARN(_init_tmp_dir(), "_init_tmp_dir failed");
     RETURN_IF_ERROR_WITH_WARN(_init_meta(read_only), "_init_meta failed");
+    RETURN_IF_ERROR_WITH_WARN(_init_rowstore(), "_init_rowstore failed");
 
     _is_used = true;
     return Status::OK();
@@ -122,6 +124,16 @@ Status DataDir::_init_meta(bool read_only) {
     Status res = _kv_store->init(read_only);
     LOG_IF(WARNING, !res.ok()) << "Fail to init meta store: " << res;
     return res;
+}
+
+Status DataDir::_init_rowstore() {
+    // init row store
+    _row_store = std::make_unique<RowStore>(_path + ROW_STORE_PREFIX);
+    LOG(INFO) << "open rowstore path: " << _path + ROW_STORE_PREFIX;
+
+    Status s = _row_store->init();
+    LOG_IF(WARNING, !s.ok()) << "Fail to init rowstore: " << _path + ROW_STORE_PREFIX;
+    return s;
 }
 
 Status DataDir::set_cluster_id(int32_t cluster_id) {

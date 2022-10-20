@@ -44,12 +44,12 @@ TEST(RowStoreEncoderTest, testEncodeInt) {
         pchunk->columns()[3]->append_datum(tmp2);
     }
     std::vector<std::string> keys, values;
-    RowStoreEncoder::encode_keys(*schema, *pchunk, 0, n, keys);
-    RowStoreEncoder::encode_values(*schema, *pchunk, 0, n, values);
+    RowStoreEncoder::chunk_to_keys(*schema, *pchunk, 0, n, keys);
+    RowStoreEncoder::chunk_to_values(*schema, *pchunk, 0, n, values);
     ASSERT_EQ(keys.size(), n);
     ASSERT_EQ(values.size(), n);
     auto dchunk = pchunk->clone_empty_with_schema();
-    RowStoreEncoder::decode(keys, values, *schema, dchunk.get());
+    RowStoreEncoder::kvs_to_chunk(keys, values, *schema, dchunk.get());
     ASSERT_EQ(pchunk->num_rows(), dchunk->num_rows());
     ASSERT_EQ(pchunk->num_rows(), n);
     ASSERT_EQ(pchunk->num_columns(), 4);
@@ -90,12 +90,12 @@ TEST(RowStoreEncoderTest, testEncodeMix) {
         pchunk->columns()[3]->append_datum(tmp);
     }
     std::vector<std::string> keys, values;
-    RowStoreEncoder::encode_keys(*schema, *pchunk, 0, n, keys);
-    RowStoreEncoder::encode_values(*schema, *pchunk, 0, n, values);
+    RowStoreEncoder::chunk_to_keys(*schema, *pchunk, 0, n, keys);
+    RowStoreEncoder::chunk_to_values(*schema, *pchunk, 0, n, values);
     ASSERT_EQ(keys.size(), n);
     ASSERT_EQ(values.size(), n);
     auto dchunk = pchunk->clone_empty_with_schema();
-    RowStoreEncoder::decode(keys, values, *schema, dchunk.get());
+    RowStoreEncoder::kvs_to_chunk(keys, values, *schema, dchunk.get());
     ASSERT_EQ(pchunk->num_rows(), dchunk->num_rows());
     ASSERT_EQ(pchunk->num_rows(), n);
     ASSERT_EQ(pchunk->num_columns(), 4);
