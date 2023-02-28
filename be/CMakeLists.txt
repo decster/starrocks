@@ -616,6 +616,7 @@ set(STARROCKS_LINK_LIBS
     TestUtil
     Tools
     Geo
+    Script
     ${WL_END_GROUP}
 )
 
@@ -858,6 +859,7 @@ add_subdirectory(${SRC_DIR}/udf)
 
 add_subdirectory(${SRC_DIR}/tools)
 add_subdirectory(${SRC_DIR}/util)
+add_subdirectory(${SRC_DIR}/script)
 
 if (WITH_BENCH STREQUAL "ON")
      message(STATUS "Build binary with bench")

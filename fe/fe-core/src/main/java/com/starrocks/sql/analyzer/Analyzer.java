@@ -560,7 +560,6 @@ public class Analyzer {
             return null;
         }
 
-
         // ------------------------------------------- Cluster Management Statement ----------------------------------------
 
         @Override

@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include <string>
+#include <common/status.h>
 
-#include "common/status.h"
+#include <string>
 
 namespace starrocks {
 
-Status execute_command(const std::string& command, const std::string& params, std::string* result);
+Status execute_script(const std::string& script, std::string& output);
 
 } // namespace starrocks
