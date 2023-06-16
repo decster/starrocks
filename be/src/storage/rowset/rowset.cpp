@@ -637,4 +637,8 @@ StatusOr<std::vector<ChunkIteratorPtr>> Rowset::get_update_file_iterators(const 
     return seg_iterators;
 }
 
+Status Rowset::verify() {
+    return Status::OK();
+}
+
 } // namespace starrocks

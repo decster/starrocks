@@ -338,6 +338,9 @@ public:
 
     bool is_column_mode_partial_update() const { return _rowset_meta->is_column_mode_partial_update(); }
 
+    // verify this rowset's data&index is logically correct
+    Status verify();
+
 protected:
     friend class RowsetFactory;
 
