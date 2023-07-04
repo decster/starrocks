@@ -1528,4 +1528,19 @@ public class CreateTableTest {
                 ");";
         Assert.assertThrows(AnalysisException.class, () -> starRocksAssert.withTable(sql1));
     }
+
+    @Test
+    public void testColumnWithRow() {
+        String sql1 = "CREATE TABLE dwd.dwd_site_scan_dtl_test (\n" +
+                "ship_id int(11) NOT NULL COMMENT \" \",\n" +
+                "sub_ship_id bigint(20) NOT NULL COMMENT \" \"\n" +
+                ") ENGINE=OLAP\n" +
+                "DUPLICATE KEY(ship_id, sub_ship_id) COMMENT \"OLAP\"\n" +
+                "DISTRIBUTED BY RANDOM " +
+                "PROPERTIES (\n" +
+                "\"replication_num\" = \"1\",\n" +
+                "\"store_type\" = \"column_with_row\"" +
+                ");";
+        Assert.assertThrows(AnalysisException.class, () -> starRocksAssert.withTable(sql1));
+    }
 }

@@ -126,6 +126,11 @@ public class PropertyAnalyzer {
 
     public static final String PROPERTIES_BINLOG_MAX_SIZE = "binlog_max_size";
 
+    public static final String PROPERTIES_STORAGE_TYPE_COLUMN = "column";
+    public static final String PROPERTIES_STORAGE_TYPE_COLUMN_WITH_ROW = "column_with_row";
+    public static final String PROPERTIES_STORAGE_TYPE_ROW = "row";
+    public static final String PROPERTIES_STORAGE_TYPE_ROW_MVCC = "row_mvcc";
+
     public static final String PROPERTIES_WRITE_QUORUM = "write_quorum";
 
     public static final String PROPERTIES_REPLICATED_STORAGE = "replicated_storage";
@@ -455,10 +460,13 @@ public class PropertyAnalyzer {
             String storageType = properties.get(PROPERTIES_STORAGE_TYPE);
             if (storageType.equalsIgnoreCase(TStorageType.COLUMN.name())) {
                 tStorageType = TStorageType.COLUMN;
+            } else if (storageType.equalsIgnoreCase(TStorageType.ROW.name())) {
+                tStorageType = TStorageType.ROW;
+            } else if (storageType.equalsIgnoreCase(TStorageType.COLUMN_WITH_ROW.name())) {
+                tStorageType = TStorageType.COLUMN_WITH_ROW;
             } else {
                 throw new AnalysisException("Invalid storage type: " + storageType);
             }
-
             properties.remove(PROPERTIES_STORAGE_TYPE);
         }
 
@@ -805,7 +813,7 @@ public class PropertyAnalyzer {
         List<UniqueConstraint> mvUniqueConstraints = Lists.newArrayList();
         if (analyzedTable.isMaterializedView() && analyzedTable.hasUniqueConstraints()) {
             mvUniqueConstraints = analyzedTable.getUniqueConstraints().stream().filter(
-                    uniqueConstraint -> parentTable.getName().equals(uniqueConstraint.getTableName()))
+                            uniqueConstraint -> parentTable.getName().equals(uniqueConstraint.getTableName()))
                     .collect(Collectors.toList());
         }
 
@@ -958,5 +966,19 @@ public class PropertyAnalyzer {
         }
         properties.remove(PROPERTIES_DATACACHE_PARTITION_DURATION);
         return TimeUtils.parseHumanReadablePeriodOrDuration(text);
+    }
+
+    public static String analyzeTableStoreType(Map<String, String> properties) throws AnalysisException {
+        String text = properties.get(PROPERTIES_STORAGE_TYPE);
+        if (text == null) {
+            return null;
+        }
+        if (!text.equalsIgnoreCase(PROPERTIES_STORAGE_TYPE_COLUMN) &&
+                !text.equalsIgnoreCase(PROPERTIES_STORAGE_TYPE_COLUMN_WITH_ROW) &&
+                !text.equalsIgnoreCase(PROPERTIES_STORAGE_TYPE_ROW)) {
+            throw new AnalysisException("store_type set error, please check");
+        }
+        properties.remove(PROPERTIES_STORAGE_TYPE);
+        return text;
     }
 }

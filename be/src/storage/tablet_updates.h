@@ -26,6 +26,7 @@
 #include "storage/edit_version.h"
 #include "storage/olap_common.h"
 #include "storage/rowset/rowset_writer.h"
+#include "storage/row_store_encoder_factory.h"
 #include "util/blocking_queue.hpp"
 
 namespace starrocks {

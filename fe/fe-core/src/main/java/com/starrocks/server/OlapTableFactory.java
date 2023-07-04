@@ -444,6 +444,9 @@ public class OlapTableFactory implements AbstractTableFactory {
                 properties.remove("storage_format");
             }
 
+            //storage type
+            table.setStorageType(baseIndexStorageType.name());
+
             // get compression type
             TCompressionType compressionType = TCompressionType.LZ4_FRAME;
             try {

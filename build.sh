@@ -39,7 +39,7 @@ MACHINE_TYPE=$(uname -m)
 export STARROCKS_HOME=${ROOT}
 
 if [ -z $BUILD_TYPE ]; then
-    export BUILD_TYPE=Release
+    export BUILD_TYPE=debug
 fi
 
 cd $STARROCKS_HOME
@@ -437,7 +437,7 @@ if [ ${BUILD_BE} -eq 1 ]; then
     cp -r -p ${STARROCKS_HOME}/be/output/lib/libmockjvm.so ${STARROCKS_OUTPUT}/be/lib/libjvm.so
     # format $BUILD_TYPE to lower case
     ibuildtype=`echo ${BUILD_TYPE} | tr 'A-Z' 'a-z'`
-    if [ "${ibuildtype}" == "release" ] ; then
+    if [ "${ibuildtype}" == "debug" ] ; then
         pushd ${STARROCKS_OUTPUT}/be/lib/ &>/dev/null
         BE_BIN=starrocks_be
         BE_BIN_DEBUGINFO=starrocks_be.debuginfo

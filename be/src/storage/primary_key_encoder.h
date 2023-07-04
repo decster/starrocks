@@ -33,6 +33,11 @@ namespace starrocks {
 //   if this column is the last column: append directly
 //   if not: convert each 0x00 inside the string to 0x00 0x01,
 //           add a tailing 0x00 0x00, then append
+
+void encode_slice(const Slice& s, std::string* dst, bool is_last);
+
+Status decode_slice(Slice* src, std::string* dest, bool is_last);
+
 class PrimaryKeyEncoder {
 public:
     static bool is_supported(const Field& f);

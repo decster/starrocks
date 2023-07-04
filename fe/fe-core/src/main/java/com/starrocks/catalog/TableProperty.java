@@ -166,6 +166,8 @@ public class TableProperty implements Writable, GsonPostProcessable {
     // the default disable replicated storage
     private boolean enableReplicatedStorage = false;
 
+    private String storageType;
+
     // 1. This table has been deleted. if hasDelete is false, the BE segment must don't have deleteConditions.
     //    If hasDelete is true, the BE segment maybe have deleteConditions because compaction.
     // 2. Before checkpoint, we relay delete job journal log to persist.
@@ -464,6 +466,13 @@ public class TableProperty implements Writable, GsonPostProcessable {
         return this;
     }
 
+    public TableProperty buildStorageType() {
+        if (properties.containsKey(PropertyAnalyzer.PROPERTIES_STORAGE_TYPE)) {
+            storageType = properties.get(PropertyAnalyzer.PROPERTIES_STORAGE_TYPE);
+        }
+        return this;
+    }
+
     public void modifyTableProperties(Map<String, String> modifyProperties) {
         properties.putAll(modifyProperties);
     }
@@ -546,6 +555,10 @@ public class TableProperty implements Writable, GsonPostProcessable {
 
     public boolean enablePersistentIndex() {
         return enablePersistentIndex;
+    }
+
+    public String storageType() {
+        return storageType;
     }
 
     public TWriteQuorumType writeQuorum() {

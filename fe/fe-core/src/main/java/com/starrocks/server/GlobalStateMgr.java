@@ -2723,6 +2723,13 @@ public class GlobalStateMgr {
                     sb.append(ForeignKeyConstraint.getShowCreateTableConstraintDesc(olapTable.getForeignKeyConstraints()))
                             .append("\"");
                 }
+
+                // store type
+                if (properties.containsKey(PropertyAnalyzer.PROPERTIES_STORAGE_TYPE)) {
+                    sb.append(StatsConstants.TABLE_PROPERTY_SEPARATOR).append(PropertyAnalyzer.PROPERTIES_STORAGE_TYPE)
+                            .append("\" = \"");
+                    sb.append(olapTable.storageType()).append("\"");
+                }
             }
 
             // compression type
