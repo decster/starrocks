@@ -306,6 +306,50 @@ void RowsetUpdateState::plan_read_by_rssid(const vector<uint64_t>& rowids, size_
     }
 }
 
+Status RowsetUpdateState::_prepare_partial_update_value_columns(Tablet* tablet, Rowset* rowset, uint32_t idx,
+                                                                const std::vector<uint32_t>& update_column_ids) {
+    const auto& tablet_schema = tablet->tablet_schema();
+    if (_partial_update_value_column_ids.empty()) {
+        // need to init
+        for (uint32_t cid : update_column_ids) {
+            if (cid >= tablet_schema.num_key_columns()) {
+                _partial_update_value_column_ids.push_back(cid);
+            }
+        }
+        CHECK(_partial_update_value_column_ids.size() > 0) << "no partial update value columns";
+        _partial_update_value_columns_schema =
+                ChunkHelper::convert_schema(tablet_schema, _partial_update_value_column_ids);
+        auto res = rowset->get_segment_iterators2(_partial_update_value_columns_schema, nullptr, 0,
+                                                  &_partial_update_value_column_read_stats);
+        if (!res.ok()) {
+            return res.status();
+        }
+        _partial_update_value_column_iterators.swap(res.value());
+    }
+    auto& itr = _partial_update_value_column_iterators[idx];
+    if (!itr) {
+        // empty segment, read do nothing
+        return Status::OK();
+    }
+    auto chunk = ChunkHelper::new_chunk(_partial_update_value_columns_schema, 4096);
+    auto num_rows = rowset->segments()[idx]->num_rows();
+    _partial_update_states[idx].partial_update_value_columns =
+            ChunkHelper::new_chunk(_partial_update_value_columns_schema, num_rows);
+    while (true) {
+        chunk->reset();
+        auto st = itr->get_next(chunk.get());
+        if (st.is_end_of_file()) {
+            break;
+        } else if (!st.ok()) {
+            return st;
+        } else {
+            _partial_update_states[idx].partial_update_value_columns->append(*chunk);
+        }
+    }
+    itr->close();
+    return Status::OK();
+}
+
 // Assume segment idx has been loaded and _upserts[idx] is not null
 // The caller should make sure `load_upserts` has been called success before call this function
 Status RowsetUpdateState::_prepare_partial_update_states(Tablet* tablet, Rowset* rowset, uint32_t idx, bool need_lock) {
@@ -327,6 +371,9 @@ Status RowsetUpdateState::_prepare_partial_update_states(Tablet* tablet, Rowset*
 
     std::vector<uint32_t> read_column_ids;
     for (uint32_t i = 0; i < tablet_schema.num_columns(); i++) {
+        if (tablet_schema.column(i).name() == "__row") {
+            continue;
+        }
         if (update_columns_set.find(i) == update_columns_set.end()) {
             read_column_ids.push_back(i);
         }
@@ -371,7 +418,9 @@ Status RowsetUpdateState::_prepare_partial_update_states(Tablet* tablet, Rowset*
                                                                              idxes.size());
         _memory_usage += _partial_update_states[idx].write_columns[col_idx]->memory_usage();
     }
-    // TODO(cbl): read partial_update_value_columns from rowset
+    if (tablet->is_column_with_row_store()) {
+        _prepare_partial_update_value_columns(tablet, rowset, idx, read_column_ids);
+    }
     int64_t t_end = MonotonicMillis();
     _partial_update_states[idx].update_byte_size();
     _partial_update_states[idx].inited = true;
@@ -645,15 +694,8 @@ Status RowsetUpdateState::apply(Tablet* tablet, Rowset* rowset, uint32_t rowset_
                                                         read_column_ids_without_full_row, index));
         }
         if (tablet->is_column_with_row_store()) {
-            // TODO(cbl): only do once for all segments
-            std::vector<uint32_t> partial_update_value_column_ids;
-            for (auto id : update_colum_ids) {
-                if (id >= tschema.num_key_columns()) {
-                    partial_update_value_column_ids.push_back(id);
-                }
-            }
-            append_full_row_column(*tschema.schema(), partial_update_value_column_ids, read_column_ids_without_full_row,
-                                   _partial_update_states[segment_id]);
+            append_full_row_column(*tschema.schema(), _partial_update_value_column_ids,
+                                   read_column_ids_without_full_row, _partial_update_states[segment_id]);
         }
     }
 
