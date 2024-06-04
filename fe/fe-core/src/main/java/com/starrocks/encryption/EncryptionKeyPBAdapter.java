@@ -35,6 +35,7 @@ public class EncryptionKeyPBAdapter
     public static final String TYPE = "type";
     public static final String ALGORITHM = "algorithm";
     public static final String ENCRYPTED_KEY = "encrypted_key";
+    public static final String PLAIN_KEY = "encrypted_key";
 
     @Override
     public JsonElement serialize(EncryptionKeyPB encryptionKeyPB, Type type,
@@ -58,6 +59,10 @@ public class EncryptionKeyPBAdapter
         if (encryptionKeyPB.encryptedKey != null) {
             String base64Encoded = Base64.getEncoder().encodeToString(encryptionKeyPB.encryptedKey);
             jsonObject.addProperty(ENCRYPTED_KEY, base64Encoded);
+        }
+        if (encryptionKeyPB.plainKey != null) {
+            String base64Encoded = Base64.getEncoder().encodeToString(encryptionKeyPB.plainKey);
+            jsonObject.addProperty(PLAIN_KEY, base64Encoded);
         }
         return jsonObject;
     }
@@ -88,6 +93,10 @@ public class EncryptionKeyPBAdapter
         if (jsonObject.has(ENCRYPTED_KEY)) {
             String base64Encoded = jsonObject.get(ENCRYPTED_KEY).getAsString();
             encryptionKeyPB.encryptedKey = Base64.getDecoder().decode(base64Encoded);
+        }
+        if (jsonObject.has(PLAIN_KEY)) {
+            String base64Encoded = jsonObject.get(PLAIN_KEY).getAsString();
+            encryptionKeyPB.plainKey = Base64.getDecoder().decode(base64Encoded);
         }
         return encryptionKeyPB;
     }

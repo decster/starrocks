@@ -143,7 +143,12 @@ public class NormalKey extends EncryptionKey {
         super.toPB(pb, mgr);
         pb.type = EncryptionKeyTypePB.NORMAL_KEY;
         pb.algorithm = algorithm;
-        pb.encryptedKey = encryptedKey;
+        if (encryptedKey == null && plainKey != null) {
+            // it's a plain master key
+            pb.plainKey = plainKey;
+        } else {
+            pb.encryptedKey = encryptedKey;
+        }
     }
 
     @Override
@@ -153,10 +158,13 @@ public class NormalKey extends EncryptionKey {
             throw new IllegalArgumentException("no algorithm in EncryptionKeyPB for NormalKey id:" + id);
         }
         algorithm = pb.algorithm;
-        if (pb.encryptedKey == null) {
+        if (pb.plainKey != null) {
+            plainKey = pb.plainKey;
+        } else if (pb.encryptedKey != null) {
+            encryptedKey = pb.encryptedKey;
+        } else {
             throw new IllegalArgumentException("no encryptedKey in EncryptionKeyPB for NormalKey id:" + id);
         }
-        encryptedKey = pb.encryptedKey;
     }
 
     @Override

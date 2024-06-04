@@ -13,6 +13,8 @@
 // limitations under the License.
 package com.starrocks.encryption;
 
+import com.baidu.bjf.remoting.protobuf.Codec;
+import com.baidu.bjf.remoting.protobuf.ProtobufProxy;
 import com.google.common.base.Preconditions;
 import com.starrocks.common.Config;
 import com.starrocks.persist.metablock.SRMetaBlockEOFException;
@@ -22,16 +24,20 @@ import com.starrocks.persist.metablock.SRMetaBlockReader;
 import com.starrocks.persist.metablock.SRMetaBlockWriter;
 import com.starrocks.proto.EncryptionKeyPB;
 import com.starrocks.server.GlobalStateMgr;
+import com.starrocks.thrift.TGetKeysRequest;
+import com.starrocks.thrift.TGetKeysResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class KeyMgr {
     private static final Logger LOG = LogManager.getLogger(KeyMgr.class);
+    private static Codec<EncryptionKeyPB> encryptionKeyPBCodec = ProtobufProxy.create(EncryptionKeyPB.class);
 
     public static final long DEFAULT_MASTER_KYE_ID = 1;
 
@@ -193,5 +199,20 @@ public class KeyMgr {
             writer.writeJson(pb);
         }
         writer.close();
+    }
+
+    private void addKeyToResponse(EncryptionKey key, TGetKeysResponse resp) throws IOException {
+        EncryptionKeyPB pb = new EncryptionKeyPB();
+        key.toPB(pb, this);
+        resp.addToKey_metas(ByteBuffer.wrap(encryptionKeyPBCodec.encode(pb)));
+    }
+
+    public TGetKeysResponse getKeys(TGetKeysRequest req) throws IOException {
+        // for now, just return current KEK and master key encryption meta
+        TGetKeysResponse ret = new TGetKeysResponse();
+        EncryptionKey kek = getCurrentKEK();
+        addKeyToResponse(kek, ret);
+        addKeyToResponse(kek.getParent(), ret);
+        return ret;
     }
 }

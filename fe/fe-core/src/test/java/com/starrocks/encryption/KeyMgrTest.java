@@ -19,10 +19,22 @@ import com.starrocks.proto.EncryptionAlgorithmPB;
 import com.starrocks.proto.EncryptionKeyPB;
 import com.starrocks.proto.EncryptionKeyTypePB;
 import com.starrocks.utframe.UtFrameUtils;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class KeyMgrTest {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        UtFrameUtils.setUpForPersistTest();
+    }
+
+    @AfterClass
+    public static void teardown() throws Exception {
+        UtFrameUtils.tearDownForPersisTest();
+    }
+
     @Test
     public void testReplayAddKey() {
         KeyMgr keyMgr = new KeyMgr();
@@ -72,7 +84,6 @@ public class KeyMgrTest {
     @Test
     public void testLoadSaveImageJsonFormat() throws Exception {
         KeyMgr keyMgr = new KeyMgr();
-        UtFrameUtils.setUpForPersistTest();
         EncryptionKeyPB pb = new EncryptionKeyPB();
         pb.id = 1L;
         pb.algorithm = EncryptionAlgorithmPB.AES_128;
@@ -92,5 +103,27 @@ public class KeyMgrTest {
         reader.close();
 
         Assert.assertEquals(2, keyMgr2.numKeys());
+    }
+
+    @Test
+    public void testLoadSaveInitializedKeyMgrJsonFormat() throws Exception {
+        String oldConfig = Config.default_master_key;
+        try {
+            Config.default_master_key = "plain:aes_128:enwSdCUAiCLLx2Bs9E/neQ==";
+            KeyMgr keyMgr = new KeyMgr();
+            keyMgr.initDefaultMasterKey();
+
+            UtFrameUtils.PseudoImage image = new UtFrameUtils.PseudoImage();
+            keyMgr.save(image.getDataOutputStream());
+
+            KeyMgr keyMgr2 = new KeyMgr();
+            SRMetaBlockReader reader = new SRMetaBlockReader(image.getDataInputStream());
+            keyMgr2.load(reader);
+            reader.close();
+
+            Assert.assertEquals(2, keyMgr2.numKeys());
+        } finally {
+            Config.default_master_key = oldConfig;
+        }
     }
 }
